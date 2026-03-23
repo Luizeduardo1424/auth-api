@@ -1,9 +1,13 @@
 import express, { Application, Request, Response } from 'express';
 import { pool } from './database/pool';
+import { errorHandler } from './middlewares/errorHandler.middleware';
+import authRoutes from './modules/auth/auth.routes';
 
 const app: Application = express();
 
 app.use(express.json());
+
+app.use('/api/v1/auth', authRoutes);
 
 app.get('/api/v1/health', async (_req: Request, res: Response) => {
   try {
@@ -21,5 +25,7 @@ app.get('/api/v1/health', async (_req: Request, res: Response) => {
     });
   }
 });
+
+app.use(errorHandler);
 
 export default app;
