@@ -3,7 +3,7 @@ services:
     image: postgres:16
     container_name: auth_api_postgres
     environment:
-      POSTGRES_USER: ${DB-USER}
+      POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     ports:

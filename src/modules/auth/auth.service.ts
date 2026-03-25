@@ -5,14 +5,17 @@ import { AppError } from '../../shared/errors/AppError';
 import { JwtPayload } from '../../shared/types';
 import { IAuthRepository } from './auth.repository.interface';
 import { LoginInput, RegisterInput } from './auth.schemas';
+import { randomUUID } from 'node:crypto';
 
 const generatedToken = (payload: JwtPayload) => {
   const accessToken = jwt.sign(payload, env.JWT_ACCESS_SECRET, {
     expiresIn: env.JWT_ACCESS_EXPIRES_IN,
+    jwtid: randomUUID(),
   } as jwt.SignOptions);
 
   const refreshToken = jwt.sign(payload, env.JWT_REFRESH_SECRET, {
     expiresIn: env.JWT_REFRESH_EXPIRES_IN,
+    jwtid: randomUUID(),
   } as jwt.SignOptions);
 
   return { accessToken, refreshToken };
@@ -79,5 +82,37 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+
+  async refresh(refreshToken: string) {
+    const tokenRecord = await this.repository.findRefreshToken(refreshToken);
+
+    if (!tokenRecord) throw new AppError('Invalid or expired refresh token', 401);
+
+    let payload: JwtPayload;
+    try {
+      payload = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET) as JwtPayload;
+    } catch {
+      throw new AppError('Invalid or expired refresh token', 401);
+    }
+
+    await this.repository.revokeRefreshToken(refreshToken);
+
+    const newPayload: JwtPayload = { sub: payload.sub, email: payload.email };
+    const { accessToken, refreshToken: newRefreshToken } = generatedToken(newPayload);
+
+    await this.repository.saveRefreshToken(
+      newPayload.sub,
+      newRefreshToken,
+      getRefreshTokenExpiry(),
+    );
+
+    return { accessToken, refreshToken: newRefreshToken };
+  }
+
+  async logout(refreshToken: string) {
+    const tokenRecord = await this.repository.findRefreshToken(refreshToken);
+    if (!tokenRecord) throw new AppError('Invalid or expired refresh token', 401);
+    await this.repository.revokeRefreshToken(refreshToken);
   }
 }
