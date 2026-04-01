@@ -18,6 +18,6 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
     req.user = payload;
     next();
   } catch {
-    res.status(401).json({ error: 'Invalid or expired accses token' });
+    res.status(401).json({ error: 'Invalid or expired accsess token' });
   }
 };
