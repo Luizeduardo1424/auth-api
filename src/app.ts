@@ -8,6 +8,8 @@ import userRoutes from './modules/users/user.routes';
 import { env } from './config/env';
 import pinoHttp from 'pino-http';
 import { logger } from './config/logger';
+import swaggerUi from 'swagger-ui-express';
+import { generateOpenApiDocument } from './config/swagger';
 
 const app: Application = express();
 
@@ -23,6 +25,9 @@ app.use(
 app.use(pinoHttp({ logger }));
 
 app.use(express.json());
+
+const swaggerDoc = generateOpenApiDocument();
+app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
 // Rotas
 app.use('/api/v1/auth', authRoutes);
